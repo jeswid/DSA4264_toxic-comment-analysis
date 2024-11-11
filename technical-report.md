@@ -104,14 +104,65 @@ For this project, we aimed to find general, rather than specific topics in our d
 
 - **Min Cluster Size**: We experimented with values from 250 to 450, choosing 300 as the optimal size for capturing broad topic themes while maintaining cluster cohesion.
 - **Min Samples**: We set this parameter to 5, balancing the need for reliable clusters without excluding too many comments.
+
+The code below shows our setting up of the range of min cluster size and min sample values
+
+```python
+# Set up parameter distribution for tuning using grid search
+min_samples_values = [5, 10, 15, 20]
+min_cluster_sizes = [250, 300, 350, 400]
+```
 - **Other parameters**: We decided to keep default parameter options for computing distances (euclidean) and determining clusters (extent of mass). Euclidean distance is widely used for text data clustering due to its compatibility with vectorized representations (bertopic: embeddings). For Reddit’s text data, Euclidean effectively captures feature differences, making it a reliable choice without the need for alternative metrics. Reddit's content is dense and varied, with overlapping topics. The EOM method supports nuanced clustering and noise filtering, which aligns well with Reddit’s structured discussions and subtopics, generating clearer, major topic-oriented clusters.
 
-We tuned HDBScan on sampled dataset (2.5%) stratified for comments by year, and source of the subreddit, to save computational cost, due to computational constraints in terms of access to GPU and RAM space. Additionally, exploring additional distance metrics and clustering methods for HDBSCAN significantly increases computational demands, especially with high-dimensional Reddit data. Given resource limitations, we focused on key parameters (min_cluster_size, min_samples)  that impact clustering performance without overextending processing capacity. 
+The code below shows our tuning function, with the HDBSCAN model initiated keeping the metric = 'euclidean' and cluster_selection_method = 'eom' constant, while tuning for min_cluster_size and min_samples
+
+```python
+# Tuning HDBSCAN parameters using the true DBCV score from validity_index
+def tune_hdbscan(embeddings, min_cluster_sizes, min_samples_values):
+    best_dbvc_score = -np.inf
+    best_params = None
+    best_model = None
+
+    # Ensure parameter values are integers
+    min_cluster_sizes = [int(x) for x in min_cluster_sizes]
+    min_samples_values = [int(x) for x in min_samples_values]
+
+    # Convert embeddings to dtype float64 before passing to HDBSCAN
+    embeddings = embeddings.astype(np.float64)  # This line is the fix
+
+    for min_cluster_size, min_samples in product(min_cluster_sizes, min_samples_values):
+        # Initialize HDBSCAN with specified parameters
+        clusterer = HDBSCAN(
+            min_cluster_size=min_cluster_size,
+            min_samples=min_samples,
+            metric='euclidean',
+            cluster_selection_method='eom'
+        )
+        clusterer.fit(embeddings)
+
+        # Only calculate validity score if there is more than one cluster (not noise-only)
+        if len(set(clusterer.labels_)) > 1:  # Exclude noise-only cases
+            # Calculate the validity index using hdbscan.validity.validity_index
+            # Pass the data (embeddings) and labels to the function
+            dbvc_score = hdbscan.validity.validity_index(embeddings, clusterer.labels_)
+            if dbvc_score > best_dbvc_score:
+                best_dbvc_score = dbvc_score
+                best_params = (min_cluster_size, min_samples)
+                best_model = clusterer
+
+    return best_model, best_params, best_dbvc_score
+```
+We tuned HDBScan on sampled dataset (2.5%) stratified for comments by year, and source of the subreddit, to save computational cost, due to computational constraints in terms of access to GPU and RAM space. Additionally, exploring additional distance metrics and clustering methods for HDBSCAN significantly increases computational demands, especially with high-dimensional Reddit data. Given resource limitations, we focused on key parameters (min_cluster_size, min_samples) that impact clustering performance without overextending processing capacity. 
 
 **Evaluation Metric: HDBSCAN Validity Index**
 
 We used the HDBSCAN Validity Index to evaluate cluster quality in BERTopic. The validity index, as implemented in HDBSCAN, measures the clustering's consistency by considering both intra-cluster density and inter-cluster separation. It provides a quantitative metric that assesses the validity of a clustering solution without requiring prior knowledge of the number of clusters (Campello et al., 2013). This metric is particularly appropriate for density-based clustering methods like HDBSCAN, as it accounts for the density variations that such algorithms inherently capture.
 
+Below is the specific code portion containing the validity index in the tune_hdbscan() function:
+
+```python
+dbvc_score = hdbscan.validity.validity_index(embeddings, clusterer.labels_)
+```
 The validity index was preferred over traditional metrics like the silhouette score and coherence score, which are generally more suited for centroid-based clustering models such as k-means (Maas et al., 2021). These traditional metrics are less effective for density-based clustering algorithms, which can have clusters of varying shapes and densities. The validity index better aligns with the nature of HDBSCAN and offers a more reliable measure of clustering quality for such models.
 
 **Training and Embedding Strategy**
