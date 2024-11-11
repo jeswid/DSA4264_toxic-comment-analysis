@@ -114,8 +114,7 @@ min_cluster_sizes = [250, 300, 350, 400]
 ```
 - **Other parameters**: We decided to keep default parameter options for computing distances (euclidean) and determining clusters (extent of mass). Euclidean distance is widely used for text data clustering due to its compatibility with vectorized representations (bertopic: embeddings). For Reddit’s text data, Euclidean effectively captures feature differences, making it a reliable choice without the need for alternative metrics. Reddit's content is dense and varied, with overlapping topics. The EOM method supports nuanced clustering and noise filtering, which aligns well with Reddit’s structured discussions and subtopics, generating clearer, major topic-oriented clusters.
 
-The code below shows our tuning function, with the HDBSCAN model initiated keeping the metric = 'euclidean' and cluster_selection_method = 'eom' constant, while tuning for min_cluster_size and min_samples
-
+The code below shows our tuning function, with the HDBSCAN model initiated keeping the metric = 'euclidean' and cluster_selection_method = 'eom' constant, while tuning for min_cluster_size and min_samples. 
 ```python
 # Tuning HDBSCAN parameters using the true DBCV score from validity_index
 def tune_hdbscan(embeddings, min_cluster_sizes, min_samples_values):
@@ -163,7 +162,7 @@ Below is the specific code portion containing the validity index in the tune_hdb
 ```python
 dbvc_score = hdbscan.validity.validity_index(embeddings, clusterer.labels_)
 ```
-The validity index was preferred over traditional metrics like the silhouette score and coherence score, which are generally more suited for centroid-based clustering models such as k-means (Maas et al., 2021). These traditional metrics are less effective for density-based clustering algorithms, which can have clusters of varying shapes and densities. The validity index better aligns with the nature of HDBSCAN and offers a more reliable measure of clustering quality for such models.
+The validity index was preferred over traditional metrics like the silhouette score and coherence score, which are generally more suited for centroid-based clustering models such as k-means (Maas et al., 2021). These traditional metrics are less effective for density-based clustering algorithms, which can have clusters of varying shapes and densities. The validity index better aligns with the nature of HDBSCAN and offers a more reliable measure of clustering quality for such models. The chosen values for min_cluster_size and min_samples are the values that correspond to the highest validity index score (dbcv_score in the code).
 
 **Training and Embedding Strategy**
 To optimise the runtime and manage Google Colab’s limitations, we pre-generated the embeddings for each year’s dataset. This allowed us to bypass the computationally expensive embedding process during each model run. By saving the embeddings, we could rerun BERTopic without recomputing the text embeddings, reducing the risk of interrupted sessions due to Colab timeouts (Devlin et al., 2019).
