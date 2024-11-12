@@ -241,7 +241,9 @@ As we ran our tuning based on a randomly sampled dataset and implemented random 
 
 *Dataset:* `data_2022_long.csv` and `data_2020_long.csv`
 
-To optimise the runtime and manage Google Colab’s limitations, we pre-generated the embeddings for each year’s dataset. This allowed us to bypass the computationally expensive embedding process during each model run. By saving the embeddings, we could rerun BERTopic without recomputing the text embeddings, reducing the risk of interrupted sessions due to Colab timeouts (Devlin et al., 2019).
+To optimise the runtime and manage Google Colab’s limitations, we pre-generated the embeddings for each year’s dataset. This allowed us to bypass the computationally expensive embedding process during each model run. By saving the embeddings, we could rerun BERTopic without recomputing the text embeddings, reducing the risk of interrupted sessions due to Colab timeouts (Devlin et al., 2019). 
+
+We chose the all-MiniLM-L6-v2 model from SentenceTransformer is an efficient, compact model well-suited for generating high-quality sentence embeddings for semantic similarity tasks. Its architecture, designed to balance speed and accuracy, enables effective clustering and topic modeling with minimal resource use, which is ideal for real-time applications and large datasets (Reimers & Gurevych, 2020).
 
 ```python
 # Embedding model chosen
