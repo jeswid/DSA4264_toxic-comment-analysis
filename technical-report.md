@@ -284,6 +284,268 @@ As BERTopic uses UMAP which is stochastic in nature, running the model may resul
 
 ## Section 4: LLM Methodology
 
+### 4.1 Toxicity Definition
+
+**What is toxic?**
+
+Before examining and labelling the toxicity and hatefulness of comments, it is important to define these terms to ensure consistency and accuracy in labelling. Toxicity refers to content that is rude, disrespectful, or profane, including the use of slurs. Hatefulness is defined as content that expresses, incites, or promotes hate based on race, gender, ethnicity, religion, nationality, sexual orientation, disability status, or caste. In this project, we use toxicity models that combine both toxic and hateful elements in their output. Therefore, when we label a comment as toxic, it implies the presence of either toxicity or hatefulness.
+
+### 4.2 Technical Assumptions
+
+In this project, several technical assumptions influenced our LLM model selection and development process, including:
+
+- **Data Preprocessing:** To ensure consistency with topic modelling, we worked on LLM models after processing the raw data in the same manner, including data cleaning and filtering of comments with more than 8 words. We assumed that the toxicity trend of comments with less than 8 words would not differ significantly with our current data selection. 
+
+- **Sampling Methodology:** For sampling data to be manually labelled, we only sampled and stratified by subReddit thread from comments in 2022 and 2023. It was assumed that this sample would be representative and contain a substantial amount of toxic comments for us to differentiate LLM models’ performance and select the best one based on the metric we chose.
+
+- **Comparison of Selected Topics:** To continue on toxicity analysis, we ran LLM on the data with topics labelled by NLP. As the top 15 topics were chosen for each year, there were some variations in the sub-topics selected across time. For example, under the transport category, buses and cars were chosen in some years while flights and cycling could appear in others. We assumed that these variations would not introduce bias or alter the overarching trends in our subsequent analysis.
+
+### 4.3 Labelling Mechanism
+
+**Rule-based Labelling**
+
+Given that our dataset is sourced from Singapore’s main threads, where comments often include Singlish words and acronyms, we face challenges in adopting pretrained models that are not fine-tuned to detect toxic Singlish expressions. This language-specific variation means that toxic comments in Singlish may go undetected, as these models may not recognise such terms accurately. To bridge this gap, we developed a rule-based approach called the Singlish Toxic Dictionary, which includes a curated list of common toxic words in Singlish.
+Before using the LLM model, each comment is checked against this dictionary. If a comment contains any toxic Singlish words, it will immediately be labelled as 'toxic.' Comments that remain unlabelled after this initial check are then processed by the pretrained model. This two-step approach improves the detection of toxicity in Singlish content, ensuring a more thorough and culturally relevant labelling process.
+
+
+```python
+singlish_toxic_dict = ['ahbeng', 'ahlian', 'baka', 'bloody hell', 'bloody idiot', 'bodoh', 'bo liao','buay pai seh', 'buay tahan', 'cb', 'cb kia', 'cb knn', 'cb', 'cb lao jia', 'cb lao knn', 'cb lor', 'cb sia', 'cb sia kia', 'ccb', 'chbye kia', 'chao chbye', 'chao chee bye', 'chow chibai', 'chow kar', 'chow tu lan', 'cibai', 'dumb ass', 'dumb', 'fuck', 'fuck you', 'fking', 'fucker', 'fucker sia', 'gila babi', 'gundu', 'hao lian kia', 'hopeless', 'idiot', 'idiot', 'ji bai', 'jiat lat', 'jialat kia', 'jibai', 'joker', 'kan', 'kan ni na', 'kena sai', 'kia si lang', 'knn', 'knn cb kia', 'knnccb', 'knnbccb', 'kns', 'kns cb', 'lampa', 'lan pa', 'lanjiao', 'lanjiao kia', 'lj', 'loser', 'nabei', 'no use kia', 'noob', 'pok gai', 'pui', 'sabo kia', 'sibei jialat', 'sibei sian', 'si gina', 'siol', 'slut', 'siao lang', 'stupid', 'suck', 'sua gu', 'tmd', 'tiok knn', 'tiok tiam', 'useless', 'what knn', 'what the fuck', 'wtf', 'wu liao kia', 'you die ah', 'you die']
+```
+
+**Manual Labelling Mechanism**
+
+To help us identify the best-performing model for our dataset, we first aimed to test and compare all shortlisted LLM models on a labelled sample. For this, we manually labelled 200 comments, categorising them as toxic (marked as 1) or non-toxic (marked as 0) based on our toxicity criteria. This approach allowed us to evaluate model performance before applying the best model to the remaining dataset.
+
+**Sampling for Manual Labelling**
+
+*Jupyter Notebook:* `Get_Manual_Labelling_Data.ipynb`
+
+*Dataset:* `Reddit-Threads_2022-2023.csv` and `cleaned_data_2223.csv`
+
+Random sampling stratified by subreddit threads is performed on the cleaned `Reddit-Threads_2022-2023.csv`. Proportion of comments for each subreddit thread is calculated and used for determining the number of comments to be included in the manual sample, with rSingaporeRaw accounting for approximately 18% of total comments, 2% for rSingaporeHappening, and 80% for rSingapore. This ensures that the sampled data reflects the proportion of each subReddit thread in the whole dataset adequately.
+
+
+### 4.4 Experimental Models
+
+Given the variety of pre-trained toxic detection models available, the question arose as to which model would be most effective for our purposes. Therefore, we explored and experimented with several models, including Google Jigsaw's Perspective, the VADER sentiment analysis tool, and various BERT-based models.
+
+**Perspective**
+
+*Jupyter Notebook:* `Perspective_Labelling.ipynb`
+
+*Dataset:* `manual_label_sample.xlsx`
+
+Perspective provides a tool for assessing the potential impact of comments on a conversation, with attributes like *TOXICITY* and *IDENTITY_ATTACK*. This model outputs a probability score between 0 and 1, where a higher score indicates a greater likelihood of the comment exhibiting the specified attribute.
+
+<u>Implementation</u>
+
+After obtaining an API key, we configured a client to interact with Perspective’s comment analysis model. We structured each request to include the comment text, specify the language, and request scores for the attributes *TOXICITY* and *IDENTITY_ATTACK*—in line with our definition of toxicity, which covers both toxicity and hatefulness elements. Upon receiving the response, we parsed it to extract scores for each attribute and experimented with different threshold values to classify comments accurately. For example, if the *TOXICITY* or *IDENTITY_ATTACK* score exceeds 0.3, the comment is labelled as *toxic*. Else, the comment is classified as *non-toxic*.
+
+```python
+# API call for TOXICITY and IDENTITY_SCORE scores
+def get_toxicity(text):
+    url = f"https://commentanalyzer.googleapis.com/v1alpha1/comments:analyze?key={API_KEY}"
+
+    # Data to send to the API
+    data = {
+        'comment': {'text': text},
+        'languages': ['en'],
+        'requestedAttributes': {
+            'TOXICITY': {},
+            'IDENTITY_ATTACK': {}
+        }
+    }
+
+    # Send request to API
+    response = requests.post(url, data=json.dumps(data), headers={'Content-Type': 'application/json'})
+
+    # Check for success and return result
+    if response.status_code == 200:
+        result = response.json()
+        toxicity_score = result['attributeScores']['TOXICITY']['summaryScore']['value']
+        identity_attack_score = result['attributeScores']['IDENTITY_ATTACK']['summaryScore']['value']
+        return toxicity_score, identity_attack_score
+    
+    else:
+        print(f"Error: {response.status_code}, {response.text}")
+        return None
+    
+# To avoid hitting rate limits
+def toxicity_delay(text):
+    time.sleep(1)  
+    return get_toxicity(text)
+
+# Label toxicity
+def label_toxicity(df, t):
+    # Create a copy of the DataFrame within the function
+    df_copy = df.copy()
+
+    # Iterate over rows and label based on toxicity thresholds
+    for index, row in df_copy.iterrows():
+        if pd.isnull(row['result']):  # If result is None, check toxicity
+            scores = toxicity_delay(row['text'])
+
+            if scores is not None:
+                toxic_score, identity_attack_score = scores
+
+                # Set threshold for toxicity
+                if toxic_score > t or identity_attack_score > t:
+                    df_copy.at[index, 'result'] = 'toxic'
+                else:
+                    df_copy.at[index, 'result'] = 'non-toxic'
+    
+    return df_copy  # Return the modified copy
+```
+
+**Vader**
+
+*Jupyter Notebook:* `Vadar_Labelling.ipynb`
+
+*Dataset:* `manual_label_sample.xlsx`
+
+Vader is a lexicon and rule-based text sentiment analysis tool that is specifically attuned to sentiments expressed in social media, making it a well-suited LLM model in analysing Reddit comments. It is the simplest and fastest model among the three. We were curious to see how the sentiment-based model would perform in this case, even though the model itself was not designed to identify toxic comments.
+
+<u>Implementation</u>
+
+- **Vader Model Selection:** We used the C.J. Hutto’s version of Vader model and retrieved polarity score from the model’s output. This version included customised negation words, idioms, and degree adverbs to modify or scale the original Vader score (Hutto, C.J. & Gilbert, E.E, 2014). It assigns a score between 0 and 1 to “negative”, “neutral”, and “positive” respectively for each target text. A compound score is then computed based on these 3 subscores, with a range of -1 to 1. A more negative score indicates a more intense negative sentiment.
+
+```python
+analyzer = SentimentIntensityAnalyzer() # C.J. Hutto's Implementation can be found in Vadar_Labelling.ipynb
+
+def get_sentiment_scores(text):
+    return analyzer.polarity_scores(text)
+
+# Apply the sentiment analysis function to the 'text' column
+sentiment_results = labelled['text'].apply(get_sentiment_scores)
+```
+- **Classification Thresholds for Toxicity:** The final compound score was compared against a threshold when labelling toxic comments. We explored thresholds from -0.4 to -0.8 and classified comments as toxic if the score was lower than the threshold.
+
+
+**Huggingface Models**
+
+*Jupyter Notebook:* `huggingface.ipynb`
+
+*Dataset:* `manual_label_sample.xlsx`
+
+To identify the most effective Hugging Face model for toxicity classification, we initially tested a diverse set of 13 models on our manually labelled sample. This selection included both models specifically trained for toxic comment detection and general sentiment analysis models, enabling us to compare performance across different types of language models. The list of tested models is as follows:
+
+1. **Toxic Comment Classifiers:**
+
+    - unitary/toxic-bert
+    - unitary/unbiased-toxic-roberta
+    - pykeio/lite-toxic-comment-classification
+    - martin-ha/toxic-comment-model
+    - JungleLee/bert-toxic-comment-classification
+    - ZiruiXiong/bert-base-finetuned-toxic-comment-classification
+    - longluu/distilbert-toxic-comment-classifier
+    - prabhaskenche/toxic-comment-classification-using-RoBERTa
+
+2. **General Sentiment Analysis Models:**
+
+    - cardiffnlp/twitter-roberta-base-sentiment
+    - roberta-base
+    - bert-base-uncased
+    - nlptown/bert-base-multilingual-uncased-sentiment
+    - siebert/sentiment-roberta-large-english
+
+Through preliminary testing, we observed that only three model general sentiment models: `unitary/toxic-bert`, `pykeio/lite-toxic-comment-classification` and `unitary/unbiased-toxic-roberta` showed consistent results suitable for our toxic classification task, with the first two performing best. The general sentiment analysis models often struggled to accurately detect nuanced toxic language, highlighting the advantage of using specialised toxic classifiers. Based on these findings, we narrowed our focus to the top 3 toxic comment classifiers, picking the one with the strongest metrics.
+
+<u>Implementation</u>
+
+- **Dynamic Text Chunking for Model Compatibility:** To accommodate each model’s maximum token limit of 512 tokens, we divided longer text entries into smaller segments, or “chunks.” This chunking approach allowed each model to process lengthy entries effectively without losing context. For each entry, the model calculated a toxicity score for each chunk, and these scores were averaged to generate a final toxicity score.
+
+```python
+def classify_toxicity_by_dynamic_chunks(text, tokenizer, classifier, max_length=512):
+    try:
+        inputs = tokenizer(text, return_tensors="pt", truncation=False)
+        input_ids = inputs['input_ids'][0]
+        total_tokens = len(input_ids)
+
+        if total_tokens <= max_length:
+            num_chunks = 1
+            chunk_size = total_tokens
+        else:
+            num_chunks = math.ceil(total_tokens / max_length)
+            chunk_size = math.ceil(total_tokens / num_chunks)
+
+        toxicity_scores = []
+
+        for i in range(num_chunks):
+            start = i * chunk_size
+            end = min((i + 1) * chunk_size, total_tokens)
+            chunk = tokenizer.decode(input_ids[start:end], skip_special_tokens=True)
+            result = classifier(chunk)
+            toxicity_scores.append(result[0]['score'])
+
+        return sum(toxicity_scores) / len(toxicity_scores)
+    except Exception as e:
+        print(f"Warning: Error processing text chunk: {str(e)}")
+        return 0.0
+```
+
+- **Classification Threshold for Toxicity:** To classify entries as *toxic* or *non-toxic*, we experimented with thresholds ranging from 0.1 to 0.9 in increments of 0.1. For each threshold, we generated predicted labels based on the model's toxicity scores in order to compare these predictions against our manually labelled data. Entries with scores above the chosen threshold were ultimately labelled as "toxic," while those below were classified as "non-toxic."
+
+**Confusion Matrics and Evaluation Metrics**
+
+*Jupyter Notebook:* `Perspective_Labelling.ipynb`, `Vadar_Labelling.ipynb` and `huggingface.ipynb`
+
+*Dataset:* `manual_label_sample.xlsx`
+
+To determine which model performed best for toxicity detection, we generated confusion matrix values, including True Positives (TP), False Positives (FP), True Negatives (TN), and False Negatives (FN), for each Hugging Face model, along with two additional models, VADER and PerspectiveAI. 
+
+<u>Metric Selection: Emphasis on Recall</u>
+
+Instead of focusing solely on accuracy, we prioritised recall as our primary metric. This decision was based on the importance of minimising false negatives in toxicity detection. Given the context of this task, it is preferable to classify a non-toxic comment as toxic (false positive) than to miss labelling a toxic comment (false negative). High recall indicates that a model effectively identifies toxic content, even if some non-toxic content is incorrectly flagged as toxic.
+
+In this context:
+
+- **Recall** = TP / (TP + FN), measuring the model’s ability to correctly identify toxic comments.
+
+- **Precision** and **accuracy** were also evaluated, but they held secondary importance compared to recall.
+
+**Choosing the Model**
+
+To select the final model for toxicity labelling, we compared the recall values across different experimental models. For Perspective, the threshold tested ranged from 0.2 to 0.5, as we found that values below 0.2 or above 0.5 did not improve the results. For Vader, thresholds between -0.4 and -0.8 were tested for classifying toxic comments. For the Hugging Face models—`unitary/toxic-bert` and `pykeio/lite-toxic-comment-classification—thresholds` from 0.1 to 0.9 were applied. The best performing thresholds for each model were 0.2, -0.4, 0.1, and 0.1 for Perspective, Vader, `toxic-bert`, and `lite-toxic-comment-classification`, respectively.
+
+Upon comparing the performance across different models, we observed notable differences in both recall scores and computational efficiency.
+
+While Perspective produced the highest recall score, it was highly time-consuming. Labelling 200 comments took approximately 5 minutes, making it difficult to scale, especially with a large volume of text data. This limitation was primarily due to the Queries Per Second (QPS) quota imposed by the API, which was capped at 1. Although we attempted to request an increase in the QPS, the tradeoff between improved speed and the project's timeline made it clear that this approach would not be feasible for our needs.
+
+Vader, despite having the lowest recall score, was also deemed unsuitable for toxicity labelling. This is because it tends to score text based mainly on sentiment. For example, texts expressing negative emotions like sadness are likely to receive highly negative scores, even though they are not necessarily toxic in nature. This made Vader less reliable for our purpose.
+
+In contrast, `unitary/toxic-bert` with a threshold of 0.1 emerged as the second-best performing model, with a recall score in the range of 0.65 to 0.75. While it did not outperform Perspective in recall, it offered a significantly faster processing time, making it more suitable for our project timeline. This recall range is adequate given our use case, as it reduces over-flagging of non-toxic content without requiring an extremely high threshold, which would be essential for more high-stakes applications like banking fraud detection. Although this threshold may introduce some false positives, its effectiveness in consistently detecting toxic content outweighs these drawbacks. Given its balance of performance and efficiency, we selected unitary/toxic-bert at a threshold of 0.1 as our final toxicity labelling model.
+
+|          | Perspective (0.2) | Vader (-0.4)     | unitary/toxic-bert<br>(0.1)  | pykeio/lite-toxic-comment-<br>classification (0.1)
+| -------- | ----------------- | ---------------- | ---------------------------- | ------------------- |
+| Recall   | 0.73              | 0.48             | 0.65                         | 0.63                |
+
+
+### 4.5 Labelling Toxicity
+
+To uncover insights on overall toxicity trends, and identify specific topics contributing to rising toxicity levels, we apply our chosen model on the entire dataset and the sample curated by the NLP team.
+
+**Whole Dataset**
+
+After deciding on the final model, we run unitary/toxic-bert with a threshold at 0.1 on the whole Reddit dataset from Jan 2020 to Oct 2023 to investigate the general toxicity trend. These are cleaned data with comments more than 8 words to align with the NLP team’s data for a fairer comparison. 
+
+**NLP Output**
+
+Similarly, after receiving the top 15 common topics from each year from the NLP team, we ran the `unitary/toxic-bert` to label toxicity. We then decided to narrow down the topics for deeper analysis. Although some topics overlapped across the years, we were unable to automatically merge them due to the specificity of the content in the output. For example, a topic might be labelled as "1_football_games_sports_players" with associated terms given as ['football', 'games', 'sports', 'players', 'team', 'badminton', 'athletes', 'gt', 'world', 'gold']. As a result, we manually classified such topics into broader categories; in this case, labelling it under *"Sports"*.
+
+We then conducted a final classification on a Miro board to better visualise the groupings. From this board (Figure X), we observed that certain topics only contained data from a single year. Such topics were deemed less meaningful for analysis, as they lacked relevance across multiple years. Instead, we prioritised groupings with data spanning 3 to 4 years, indicating sustained topic relevance. This approach aligns with our objective of deriving useful and impactful insights for recommendations. Ultimately, we focused on the following nine categories: Religion, SG Politics, Covid, Sports, Housing, Music, Gaming, Transport, and Media.
+
+<div style="text-align: center;">
+    <img src="miro_9_topics.jpg" alt="2020 Top 15 Topics" />
+    <p><em>Figure 5: 2020 Top 15 Topics</em></p>
+</div>
+
+
+*Jupyter Notebook:* `HDBSCAN Fine Tuning.ipynb`
+
+*Dataset:* `data_2022_long.csv` and `data_2020_long.csv`
+
+**BERTopic Tuning and HDBScan**
+
 ## Section 5: Frontend 
 
 We developed a frontend dashboard interface for our toxic comment analysis to enhance usability and interpretability for non-technical end users, such as policy makers. Key functions of this dashboard include adjustable date and topic filters, which allow users to tailor their search to specific periods or topics of interest. The frontend generates interactive graphs that visually represent trends in toxic comment frequency, providing an overview of levels of toxicity and hate over time. If policy makers wish to take a closer look at the actual toxic comments, they can use the ‘Toxic Comment’ feature to retrieve toxic comments from a specified topic and chosen month, allowing for further analysis. 
