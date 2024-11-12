@@ -173,8 +173,8 @@ Recognizing the limitations of LDA and SpaCy, we decided to transition to **Vade
 
 For this project, we aimed to find general, rather than specific topics in our data. For example, rather than finding topics such as “Football” or “Olympics”, we aimed to identify the broader topic of “Sports”. This is because broader topics are able to capture a larger proportion of Reddit comments. For clustering in BERTopic, we used HDBScan, which we tuned for the following parameters:
 
-- **Min Cluster Size**: We experimented with values from 250 to 450, choosing 300 as the optimal size for capturing broad topic themes while maintaining cluster cohesion.
-- **Min Samples**: We set this parameter to 5, balancing the need for reliable clusters without excluding too many comments.
+- **Min Cluster Size**: We experimented with values from 250 to 450, choosing 350 as the optimal size for capturing broad topic themes while maintaining cluster cohesion.
+- **Min Samples**: We experimented with values from 5 to 20, choosing 20 as the optimal size to balance the need for reliable clusters without excluding too many comments.
 
 The code below shows our setting up of the range of min cluster size and min sample values
 
