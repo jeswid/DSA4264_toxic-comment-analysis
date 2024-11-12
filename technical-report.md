@@ -782,13 +782,15 @@ To build on our findings and enhance the robustness of our analysis, the followi
 - **Topic modelling**: As a future improvement, we could experiment with tuning additional HDBScan parameters beyond just `min_samples` and `min_cluster_size`, such as `cluster_selection_epsilon` and `alpha`, for finer control over clustering. Additionally, we could implement multi-aspect topic modelling to capture distinct dimensions within topics, as described in BERTopic’s documentation. Unlike traditional topic modelling, which identifies a single theme per topic, multi-aspect modelling decomposes topics into different subtopics or “aspects.” This would allow us to analyse complex themes in greater detail, offering insights into specific facets within a single topic. Additionally, given more computational resources (GPU and RAM space), we could explore tuning on the entire dataset instead of a sample dataset, and also fine-tuned other components of the bertopic model instead of only HDBSCAN, to ensure that BERTOPic performs optimally and yields the best topic modelling results specific to our dataset. 
 
 <br>
-References:
+References:<br>
 
 Bird, Steven, and Ewan Klein. Natural Language Processing with Python. 2009.<br>
 
 Blei, David, et al. “Latent Dirichlet Allocation.” Journal of Machine Learning Research, vol. 3, 2003, pp. 993–1022, jmlr.org/papers/volume3/blei03a/blei03a.pdf.<br>
 
-Campello, Ricardo J. G. B., et al. “Density-Based Clustering Based on Hierarchical Density Estimates.” Advances in Knowledge Discovery and Data Mining, vol. 7819, 2013, pp. 160–172, link.springer.com/chapter/10.1007/978-3-642-37456-2_14, https://doi.org/10.1007/978-3-642-37456-2_14.<br>cjhutto. “VaderSentiment/README.rst at Master · Cjhutto/VaderSentiment.” GitHub, 2014, github.com/cjhutto/vaderSentiment/blob/master/README.rst. Accessed 12 Nov. 2024.<br>
+Campello, Ricardo J. G. B., et al. “Density-Based Clustering Based on Hierarchical Density Estimates.” Advances in Knowledge Discovery and Data Mining, vol. 7819, 2013, pp. 160–172, link.springer.com/chapter/10.1007/978-3-642-37456-2_14, https://doi.org/10.1007/978-3-642-37456-2_14.<br>
+
+cjhutto. “VaderSentiment/README.rst at Master · Cjhutto/VaderSentiment.” GitHub, 2014, github.com/cjhutto/vaderSentiment/blob/master/README.rst. Accessed 12 Nov. 2024.<br>
 
 Devlin, Jacob, et al. “BERT: Pre-Training of Deep Bidirectional Transformers for Language Understanding.” Proceedings of the 2019 Conference of the North, vol. 1, 2019, https://doi.org/10.18653/v1/n19-1423.<br>
 
