@@ -784,13 +784,22 @@ To build on our findings and enhance the robustness of our analysis, the followi
 <br>
 References:
 
-Works CitedBird, Steven, and Ewan Klein. Natural Language Processing with Python. 2009.<br>
+Bird, Steven, and Ewan Klein. Natural Language Processing with Python. 2009.<br>
+
 Blei, David, et al. “Latent Dirichlet Allocation.” Journal of Machine Learning Research, vol. 3, 2003, pp. 993–1022, jmlr.org/papers/volume3/blei03a/blei03a.pdf.<br>
+
 Campello, Ricardo J. G. B., et al. “Density-Based Clustering Based on Hierarchical Density Estimates.” Advances in Knowledge Discovery and Data Mining, vol. 7819, 2013, pp. 160–172, link.springer.com/chapter/10.1007/978-3-642-37456-2_14, https://doi.org/10.1007/978-3-642-37456-2_14.<br>cjhutto. “VaderSentiment/README.rst at Master · Cjhutto/VaderSentiment.” GitHub, 2014, github.com/cjhutto/vaderSentiment/blob/master/README.rst. Accessed 12 Nov. 2024.<br>
+
 Devlin, Jacob, et al. “BERT: Pre-Training of Deep Bidirectional Transformers for Language Understanding.” Proceedings of the 2019 Conference of the North, vol. 1, 2019, https://doi.org/10.18653/v1/n19-1423.<br>
+
 Grootendorst, Maarten. “BERTopic: Neural Topic Modeling with a Class-Based TF-IDF Procedure.” ArXiv:2203.05794 [Cs], 11 Mar. 2022, arxiv.org/abs/2203.05794, https://doi.org/10.48550/arXiv.2203.05794.<br>
-Hutto, C., and Eric Gilbert. “VADER: A Parsimonious Rule-Based Model for Sentiment Analysis of Social Media Text.” Proceedings of the International AAAI Conference on Web and Social Media, vol. 8, no. 1, 16 May 2014, ojs.aaai.org/index.php/ICWSM/article/view/14550.
+
+Hutto, C., and Eric Gilbert. “VADER: A Parsimonious Rule-Based Model for Sentiment Analysis of Social Media Text.” Proceedings of the International AAAI Conference on Web and Social Media, vol. 8, no. 1, 16 May 2014, ojs.aaai.org/index.php/ICWSM/article/view/14550.<br>
+
 Maas, Andrew L., et al. “Learning Word Vectors for Sentiment Analysis.” ACLWeb, Association for Computational Linguistics, 1 June 2011, aclanthology.org/P11-1015/.<br>
+
 Montani, Ines, et al. “Explosion/SpaCy: V3.7.2: Fixes for APIs and Requirements.” Zenodo, 16 Oct. 2023, zenodo.org/records/10009823, https://doi.org/10.5281/zenodo.10009823. Accessed 20 Oct. 2024.<br>
+
 Reimers, Nils, and Iryna Gurevych. Making Monolingual Sentence Embeddings Multilingual Using Knowledge Distillation. 21 Apr. 2020, https://doi.org/10.48550/arxiv.2004.09813.<br>
+
 Röder, Michael, et al. “Exploring the Space of Topic Coherence Measures.” Proceedings of the Eighth ACM International Conference on Web Search and Data Mining - WSDM ’15, 2015, pp. 399–408, svn.aksw.org/papers/2015/WSDM_Topic_Evaluation/public.pdf, https://doi.org/10.1145/2684822.2685324.
