@@ -164,6 +164,11 @@ Recognizing the limitations of LDA and SpaCy, we decided to transition to **Vade
 </div>
 
 ### 3.4 Results and Evaluation
+
+*Jupyter Notebook:* `HDBSCAN Fine Tuning.ipynb`
+
+*Dataset:* `data_2022_long.csv` and `data_2020_long.csv`
+
 **BERTopic Tuning and HDBScan**
 
 For this project, we aimed to find general, rather than specific topics in our data. For example, rather than finding topics such as “Football” or “Olympics”, we aimed to identify the broader topic of “Sports”. This is because broader topics are able to capture a larger proportion of Reddit comments. For clustering in BERTopic, we used HDBScan, which we tuned for the following parameters:
@@ -219,10 +224,6 @@ We tuned HDBScan on sampled dataset (2.5%) stratified for comments by year, and 
 
 **Evaluation Metric: HDBSCAN Relative Validity Index**
 
-*Jupyter Notebook:* `HDBSCAN Fine Tuning.ipynb`
-
-*Dataset:* `data_2022_long.csv` and `data_2020_long.csv`
-
 We used the HDBSCAN Relative Validity Index to evaluate cluster quality in BERTopic. The relative validity index, as implemented in HDBSCAN, measures the clustering's consistency by considering both intra-cluster density and inter-cluster separation in a comparative manner. This provides a quantitative metric that helps assess the relative validity of different clustering solutions without requiring prior knowledge of the number of clusters (Campello et al., 2013). This metric is particularly suitable for density-based clustering methods like HDBSCAN, as it can account for density variations while balancing computational efficiency.
 
 Below is the specific code portion containing the relative validity index in the randomized_hdbscan_search() function:
@@ -230,7 +231,9 @@ Below is the specific code portion containing the relative validity index in the
 ```python
 dbvc_score = clusterer.relative_validity_
 ```
-The validity index was preferred over traditional metrics like the silhouette score and coherence score, which are generally more suited for centroid-based clustering models such as k-means (Maas et al., 2021). These traditional metrics are less effective for density-based clustering algorithms, which can have clusters of varying shapes and densities. The validity index better aligns with the nature of HDBSCAN and offers a more reliable measure of clustering quality for such models. The chosen values for min_cluster_size and min_samples are the values that correspond to the highest validity index score (dbcv_score in the code).
+The validity index was preferred over traditional metrics like the silhouette score and coherence score, which are generally more suited for centroid-based clustering models such as k-means (Maas et al., 2021). These traditional metrics are less effective for density-based clustering algorithms, which can have clusters of varying shapes and densities. The validity index better aligns with the nature of HDBSCAN and offers a more reliable measure of clustering quality for such models. The chosen values for min_cluster_size and min_samples are the values that correspond to the highest validity index score (dbcv_score) relative to other combinations of parameter values.
+
+As we ran our tuning based on a randomly sampled dataset and implemented random search for parameter-tuning, running the tuning notebook may yield slightly different best parameters and best DBCV score.
 
 **Training and Embedding Strategy**
 
