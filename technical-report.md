@@ -208,7 +208,7 @@ The code below shows our tuning function, where we initiated the HDBSCAN model w
 fitted_umap = umap.UMAP(n_components=5, n_neighbors=30, min_dist=0.0, random_state=42).fit(embeddings)
 umap_embeddings = fitted_umap.embedding_
 ```
-To tune HDBSCAN with `RandomizedSearchCV()`, we first need to create a custom wrapper class, HDBSCANWrapper, which includes the essential characteristics required for HDBSCAN to function as a model within `RandomizedSearchCV()`. This wrapper lets us define parameters and methods, ensuring compatibility with the requirements of `RandomizedSearchCV()`. We opted for this approach after testing both manual grid search and a custom randomized search function, which exceeded our computational resources during execution.
+To tune HDBSCAN with `RandomizedSearchCV()`, we first need to create a custom wrapper class, `HDBSCANWrapper`, which includes the essential characteristics required for HDBSCAN to function as a model within `RandomizedSearchCV()`. This wrapper lets us define parameters and methods, ensuring compatibility with the requirements of `RandomizedSearchCV()`. We opted for this approach after testing both manual grid search and a custom randomized search function, which exceeded our computational resources during execution.
 
 ```python
 # Step 1: Define a custom HDBSCAN estimator wrapper
@@ -238,7 +238,7 @@ class HDBSCANWrapper(BaseEstimator, ClusterMixin):
         else:
             return -np.inf  # Assign a very low score if there's only noise
 ```
-After creating the HDBSCAN wrapper, we define the parameter distributions for `RandomizedSearchCV()` and set up RandomizedSearchCV with the HDBSCANWrapper as follows
+After creating the `HDBSCANWrapper`, we define the parameter distributions for `RandomizedSearchCV()` and set up `RandomizedSearchCV()` with the `HDBSCANWrapper` as follows
 
 ```python
 # Step 2: Define parameter distributions for RandomizedSearchCV
@@ -294,7 +294,7 @@ We ran our optimal BERTopic model on the rest of the dataset. Given limited GPU 
 ```python
 #Best parameters
 best_hdbscan = HDBSCAN(cluster_selection_method='eom', metric='euclidean',
-        min_cluster_size=300, min_samples=5)
+        min_cluster_size=350, min_samples=20)
 
 #Best bertopic model
 topic_model = BERTopic(hdbscan_model=best_hdbscan)
@@ -307,7 +307,6 @@ For example, the topics identified for 2020 can be seen below.
     <img src="report-images/bert_2020_topics.png" alt="2020 Top 15 Topics" />
     <p><em>Figure 5: 2020 Top 15 Topics</em></p>
 </div>
-
 
 As BERTopic uses UMAP which is stochastic in nature, running the model may result in slightly different results as compared to the ones our team derived. To our model results, see `2020top15topics.csv`, `2021top15topics.csv`, `2022top15topics.csv` and `2023top15topics.csv` along with the corresponding datasets labelled with topics. 
 
