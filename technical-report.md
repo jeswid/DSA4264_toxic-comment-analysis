@@ -237,8 +237,6 @@ dbvc_score = clusterer.relative_validity_
 ```
 The validity index was preferred over traditional metrics like the silhouette score and coherence score, which are generally more suited for centroid-based clustering models such as k-means (Maas et al., 2021). These traditional metrics are less effective for density-based clustering algorithms, which can have clusters of varying shapes and densities. The validity index better aligns with the nature of HDBSCAN and offers a more reliable measure of clustering quality for such models. The chosen values for min_cluster_size and min_samples are the values that correspond to the highest validity index score (dbcv_score) relative to other combinations of parameter values.
 
-As we ran our tuning based on a randomly sampled dataset and implemented random search for parameter-tuning, running the tuning notebook may yield slightly different best parameters and best DBCV score.
-
 **Training and Embedding Strategy**
 
 *Jupyter Notebook:* `Bertopic Modelling.ipynb`
