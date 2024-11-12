@@ -237,6 +237,8 @@ dbvc_score = clusterer.relative_validity_
 ```
 The validity index was preferred over traditional metrics like the silhouette score and coherence score, which are generally more suited for centroid-based clustering models such as k-means (Maas et al., 2021). These traditional metrics are less effective for density-based clustering algorithms, which can have clusters of varying shapes and densities. The validity index better aligns with the nature of HDBSCAN and offers a more reliable measure of clustering quality for such models. The chosen values for min_cluster_size and min_samples are the values that correspond to the highest validity index score (dbcv_score) relative to other combinations of parameter values.
 
+As we ran our tuning based on a randomly sampled dataset and implemented random search for parameter-tuning, running the tuning notebook may yield slightly different best parameters and best DBCV score.
+
 **Training and Embedding Strategy**
 
 *Jupyter Notebook:* `Bertopic Modelling.ipynb`
@@ -292,11 +294,11 @@ Before examining and labelling the toxicity and hatefulness of comments, it is i
 
 In this project, several technical assumptions influenced our LLM model selection and development process, including:
 
-- **Data Preprocessing:** To ensure consistency with topic modelling, we worked on LLM models after processing the raw data in the same manner, including data cleaning and filtering of comments with more than 8 words. We assumed that the toxicity trend of comments with less than 8 words would not differ significantly with our current data selection. 
+- **Data Preprocessing**: To ensure consistency with topic modelling, we worked on LLM models after processing the raw data in the same manner, including data cleaning and filtering of comments with more than 8 words. We assumed that the toxicity trend of comments with less than 8 words would not differ significantly with our current data selection. 
 
-- **Sampling Methodology:** For sampling data to be manually labelled, we only sampled and stratified by subReddit thread from comments in 2022 and 2023. It was assumed that this sample would be representative and contain a substantial amount of toxic comments for us to differentiate LLM models’ performance and select the best one based on the metric we chose.
+- **Sampling Methodology**: For sampling data to be manually labelled, we only sampled and stratified by subReddit thread from comments in 2022 and 2023. It was assumed that this sample would be representative and contain a substantial amount of toxic comments for us to differentiate LLM models’ performance and select the best one based on the metric we chose.
 
-- **Comparison of Selected Topics:** To continue on toxicity analysis, we ran LLM on the data with topics labelled by NLP. As the top 15 topics were chosen for each year, there were some variations in the sub-topics selected across time. For example, under the transport category, buses and cars were chosen in some years while flights and cycling could appear in others. We assumed that these variations would not introduce bias or alter the overarching trends in our subsequent analysis.
+- **Comparison of Selected Topics**: To continue on toxicity analysis, we ran LLM on the data with topics labelled by NLP. As the top 15 topics were chosen for each year, there were some variations in the sub-topics selected across time. For example, under the transport category, buses and cars were chosen in some years while flights and cycling could appear in others. We assumed that these variations would not introduce bias or alter the overarching trends in our subsequent analysis.
 
 ### 4.3 Labelling Mechanism
 
@@ -318,9 +320,11 @@ To help us identify the best-performing model for our dataset, we first aimed to
 
 *Jupyter Notebook:* `Get_Manual_Labelling_Data.ipynb`
 
-*Dataset:* `Reddit-Threads_2022-2023.csv` and `cleaned_data_2223.csv`
+*Dataset(before):* `Reddit-Threads_2022-2023.csv` and `cleaned_data_2223.csv`
 
-Random sampling stratified by subreddit threads is performed on the cleaned `Reddit-Threads_2022-2023.csv`. Proportion of comments for each subreddit thread is calculated and used for determining the number of comments to be included in the manual sample, with rSingaporeRaw accounting for approximately 18% of total comments, 2% for rSingaporeHappening, and 80% for rSingapore. This ensures that the sampled data reflects the proportion of each subReddit thread in the whole dataset adequately.
+*Dataset(after):* `manual_label_sample.xlsx`
+
+Random sampling stratified by subreddit threads is performed on the cleaned `Reddit-Threads_2022-2023.csv`. Proportion of comments for each subreddit thread is calculated and used for determining the number of comments to be included in the manual sample, with rSingaporeRaw accounting for approximately 18% of total comments, 2% for rSingaporeHappening, and 80% for rSingapore. This ensures that the sampled data reflects the proportion of each subReddit thread in the whole dataset adequately. Note that due to minor discrepency in data cleaning in the earlier stage of the project, the `manual_label_sample.xlsx` may not be reproduced by the current `cleaned_data_2223.csv`.
 
 
 ### 4.4 Experimental Models
@@ -405,7 +409,7 @@ Vader is a lexicon and rule-based text sentiment analysis tool that is specifica
 
 <u>Implementation</u>
 
-- **Vader Model Selection:** We used the C.J. Hutto’s version of Vader model and retrieved polarity score from the model’s output. This version included customised negation words, idioms, and degree adverbs to modify or scale the original Vader score (Hutto, C.J. & Gilbert, E.E, 2014). It assigns a score between 0 and 1 to “negative”, “neutral”, and “positive” respectively for each target text. A compound score is then computed based on these 3 subscores, with a range of -1 to 1. A more negative score indicates a more intense negative sentiment.
+- **Vader Model Selection**: We used the C.J. Hutto’s version of Vader model and retrieved polarity score from the model’s output. This version included customised negation words, idioms, and degree adverbs to modify or scale the original Vader score (Hutto, C.J. & Gilbert, E.E, 2014). It assigns a score between 0 and 1 to “negative”, “neutral”, and “positive” respectively for each target text. A compound score is then computed based on these 3 subscores, with a range of -1 to 1. A more negative score indicates a more intense negative sentiment.
 
 ```python
 analyzer = SentimentIntensityAnalyzer() # C.J. Hutto's Implementation can be found in Vadar_Labelling.ipynb
@@ -416,7 +420,7 @@ def get_sentiment_scores(text):
 # Apply the sentiment analysis function to the 'text' column
 sentiment_results = labelled['text'].apply(get_sentiment_scores)
 ```
-- **Classification Thresholds for Toxicity:** The final compound score was compared against a threshold when labelling toxic comments. We explored thresholds from -0.4 to -0.8 and classified comments as toxic if the score was lower than the threshold.
+- **Classification Thresholds for Toxicity**: The final compound score was compared against a threshold when labelling toxic comments. We explored thresholds from -0.4 to -0.8 and classified comments as toxic if the score was lower than the threshold.
 
 
 **Huggingface Models**
@@ -427,7 +431,7 @@ sentiment_results = labelled['text'].apply(get_sentiment_scores)
 
 To identify the most effective Hugging Face model for toxicity classification, we initially tested a diverse set of 13 models on our manually labelled sample. This selection included both models specifically trained for toxic comment detection and general sentiment analysis models, enabling us to compare performance across different types of language models. The list of tested models is as follows:
 
-1. **Toxic Comment Classifiers:**
+1. **Toxic Comment Classifiers**:
 
     - unitary/toxic-bert
     - unitary/unbiased-toxic-roberta
@@ -438,7 +442,7 @@ To identify the most effective Hugging Face model for toxicity classification, w
     - longluu/distilbert-toxic-comment-classifier
     - prabhaskenche/toxic-comment-classification-using-RoBERTa
 
-2. **General Sentiment Analysis Models:**
+2. **General Sentiment Analysis Models**:
 
     - cardiffnlp/twitter-roberta-base-sentiment
     - roberta-base
@@ -450,7 +454,7 @@ Through preliminary testing, we observed that only three model general sentiment
 
 <u>Implementation</u>
 
-- **Dynamic Text Chunking for Model Compatibility:** To accommodate each model’s maximum token limit of 512 tokens, we divided longer text entries into smaller segments, or “chunks.” This chunking approach allowed each model to process lengthy entries effectively without losing context. For each entry, the model calculated a toxicity score for each chunk, and these scores were averaged to generate a final toxicity score.
+- **Dynamic Text Chunking for Model Compatibility**: To accommodate each model’s maximum token limit of 512 tokens, we divided longer text entries into smaller segments, or “chunks.” This chunking approach allowed each model to process lengthy entries effectively without losing context. For each entry, the model calculated a toxicity score for each chunk, and these scores were averaged to generate a final toxicity score.
 
 ```python
 def classify_toxicity_by_dynamic_chunks(text, tokenizer, classifier, max_length=512):
@@ -481,7 +485,7 @@ def classify_toxicity_by_dynamic_chunks(text, tokenizer, classifier, max_length=
         return 0.0
 ```
 
-- **Classification Threshold for Toxicity:** To classify entries as *toxic* or *non-toxic*, we experimented with thresholds ranging from 0.1 to 0.9 in increments of 0.1. For each threshold, we generated predicted labels based on the model's toxicity scores in order to compare these predictions against our manually labelled data. Entries with scores above the chosen threshold were ultimately labelled as "toxic," while those below were classified as "non-toxic."
+- **Classification Threshold for Toxicity**: To classify entries as *toxic* or *non-toxic*, we experimented with thresholds ranging from 0.1 to 0.9 in increments of 0.1. For each threshold, we generated predicted labels based on the model's toxicity scores in order to compare these predictions against our manually labelled data. Entries with scores above the chosen threshold were ultimately labelled as "toxic," while those below were classified as "non-toxic."
 
 **Confusion Matrics and Evaluation Metrics**
 
@@ -524,25 +528,90 @@ To uncover insights on overall toxicity trends, and identify specific topics con
 
 **Whole Dataset**
 
+*Jupyter Notebook:* `bert_colab.ipynb`
+
+*Dataset:* `cleaned_data_2223.csv` and `cleaned_data_2021.csv`
+
 After deciding on the final model, we run unitary/toxic-bert with a threshold at 0.1 on the whole Reddit dataset from Jan 2020 to Oct 2023 to investigate the general toxicity trend. These are cleaned data with comments more than 8 words to align with the NLP team’s data for a fairer comparison. 
+
+```python
+# Load the tokenizer and model
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+# Create the pipeline
+classifier = pipeline('text-classification', model=model_name, top_k=None, device=0, batch_size=8)
+
+labels = []
+# Loop through each row in the dataframe
+for index, row in df_sample.iterrows():
+    text = row['text']
+
+    if any(word in text for word in singlish_toxic_dict):
+        predicted_label = "toxic"
+
+    else:
+        # Get toxicity score for the text
+        toxicity_score = classify_toxicity_by_dynamic_chunks(text, tokenizer, classifier)
+
+        # Classify the toxicity score based on the threshold
+        predicted_label = classify_toxicity_score(toxicity_score, threshold=0.1)
+
+    df_sample.at[index, 'predicted_label'] = predicted_label
+
+# Save the updated DataFrame with labels to a new CSV file
+output_file_path = '/content/drive/My Drive/Colab Notebooks/cleaned_data_2223_labelled' + str(start_index) + '-' + '.csv'
+df_sample.to_csv(output_file_path)
+```
 
 **NLP Output**
 
+*Jupyter Notebook:* `bert_colab.ipynb`
+
+*Dataset (before):* `2020_comments_top15topics.csv`, `2021_comments_top15topics.csv`, `2022_comments_top15topics.csv`, `2023_comments_top15topics.csv`
+
+*Dataset (after):* `2020_comments_top15topics_labelled.csv`, `2021_comments_top15topics_labelled.csv`, `2022_comments_top15topics_labelled.csv`, `2023_comments_top15topics_labelled.csv`
+
 Similarly, after receiving the top 15 common topics from each year from the NLP team, we ran the `unitary/toxic-bert` to label toxicity. We then decided to narrow down the topics for deeper analysis. Although some topics overlapped across the years, we were unable to automatically merge them due to the specificity of the content in the output. For example, a topic might be labelled as "1_football_games_sports_players" with associated terms given as ['football', 'games', 'sports', 'players', 'team', 'badminton', 'athletes', 'gt', 'world', 'gold']. As a result, we manually classified such topics into broader categories; in this case, labelling it under *"Sports"*.
 
-We then conducted a final classification on a Miro board to better visualise the groupings. From this board (Figure X), we observed that certain topics only contained data from a single year. Such topics were deemed less meaningful for analysis, as they lacked relevance across multiple years. Instead, we prioritised groupings with data spanning 3 to 4 years, indicating sustained topic relevance. This approach aligns with our objective of deriving useful and impactful insights for recommendations. Ultimately, we focused on the following nine categories: Religion, SG Politics, Covid, Sports, Housing, Music, Gaming, Transport, and Media.
+We then conducted a final classification on a Miro board to better visualise the groupings. From this board (Figure 6), we observed that certain topics only contained data from a single year. Such topics were deemed less meaningful for analysis, as they lacked relevance across multiple years. Instead, we prioritised groupings with data spanning 3 to 4 years, indicating sustained topic relevance. This approach aligns with our objective of deriving useful and impactful insights for recommendations. Ultimately, we focused on the following nine categories: *Religion, SG Politics, Covid, Sports, Housing, Music, Gaming, Transport, and Media.* Then, we relabelled the data according to the nine categories.
+
+*Jupyter Notebook:* `Topic_Relabelling.ipynb`
+
+*Dataset:* `2020_comments_top15topics_labelled.csv`, `2021_comments_top15topics_labelled.csv`, `2022_comments_top15topics_labelled.csv`, `2023_comments_top15topics_labelled.csv`
 
 <div style="text-align: center;">
-    <img src="miro_9_topics.jpg" alt="2020 Top 15 Topics" />
-    <p><em>Figure 5: 2020 Top 15 Topics</em></p>
+    <img src="report-images/miro_9_topics.jpg" alt="2020-2023 Final Top 9 Topics" />
+    <p><em>Figure 6: 2020-2023 Final Top 9 Topics</em></p>
 </div>
 
+### 4.6 Graphical Analysis
 
-*Jupyter Notebook:* `HDBSCAN Fine Tuning.ipynb`
+To help identify trends and gain further insights from our results, we visualised the data using line graphs:
 
-*Dataset:* `data_2022_long.csv` and `data_2020_long.csv`
+*Jupyter Notebook:* `Plot_Whole.ipynb`
 
-**BERTopic Tuning and HDBScan**
+*Dataset:* `labelled_data_whole.csv`
+
+- **Overview Graph**: This visualisation illustrates the trend in toxicity over time, plotting the monthly proportion of toxic comments from January 2020 to October 2023. We grouped data by month, calculating the proportion of toxic comments respectively to observe any long-term trends or seasonal fluctuations.
+
+- **Hourly Graph**: To examine the daily pattern of toxicity, we grouped data by the hour of the day and plotted the proportion of toxic comments per hour. This reveals patterns in toxicity that may correlate with specific times of day, helping us understand when toxic interactions tend to peak.
+
+*Jupyter Notebook:* `Plot_9_Topics.ipynb`
+
+*Dataset:* `topic_relabelled_full.csv`
+
+- **Proportion of Toxic Comments – Chosen 9 Topics**: We created graphs to compare the proportion of toxic comments for our refined selection of 9 topics against the overall trend. Grouping data by month and calculating the proportion of toxic comments respectively, this approach ensures that our focus on the selected 9 topics adequately captures the primary patterns observed across all topics.
+
+- **Proportion of Toxic Comments – Societal & Governance vs. Entertainment Categories**: To improve clarity and draw meaningful comparisons, we organised topics into two broad categories:
+
+    - *Societal & Governance:* This category covers topics of high societal importance and public focus, including Religion, Singapore Politics, Covid, Transport, and Housing.
+
+    - *Entertainment:* This category includes lighter, more recreational topics like Sports, Music, Gaming, and Media.
+
+- Dividing the topics into these categories reduces overcrowding in the graphs and highlights contrasts between discussions with varying levels of public and government focus.
+
+For each category, we grouped data by month and computed the proportion of toxic comments for each topic by dividing the number of toxic comments by the total comments for that topic in the month. Additionally, we applied a 3-month rolling window to the data to smooth out short-term fluctuations, providing a clearer view of sustained trends over time.
+
 
 ## Section 5: Frontend 
 
@@ -552,20 +621,140 @@ This dashboard allows end users to easily obtain an understanding of the levels 
 
 To run the frontend dashboard, run `streamlit run app.py` in your terminal. It requires the `topic_relabelled_full.csv` dataset.
 
-### Section 6: Findings
+## Section 6: Findings
 
-*In this subsection, you should report the results from your experiments in a summary table, keeping only the most relevant results for your experiment (ie your best model, and two or three other options which you explored). You should also briefly explain the summary table and highlight key results.*
+### 6.1 Results
 
-*Interpretability methods like LIME or SHAP should also be reported here, using the appropriate tables or charts.*
+<div style="text-align: center;">
+    <img src="report-images/toxicity_whole_bymonth.png" alt="Toxicity Trend by Month" />
+    <p><em>Figure 7: Toxicity Trend by Month</em></p>
+</div>
+
+The overview plot reveals that Reddit has grown increasingly toxic and hateful over recent years, with a noticeable spike in the first half of 2022 and a sharp increase in the second half of 2023. By this period, approximately one in every three comments was labelled as toxic by our model.
+
+<div style="text-align: center;">
+    <img src="report-images/toxicity_whole_byhour.png" alt="Toxicity Trend by Hour" />
+    <p><em>Figure 8: Toxicity Trend by Hour</em></p>
+</div>
+
+From the hourly graph, we observed a notable rise in toxicity and hatefulness throughout the day, peaking at around 7 pm before tapering off in the evening.
+
+<div style="text-align: center;">
+    <img src="report-images/toxicity_9_topics.png" alt="Toxicity Trend Top 9 Topics" />
+    <p><em>Figure 9: Toxicity Trend Top 9 Topics</em></p>
+</div>
+
+The Proportion of Toxic Comments graph for the chosen 9 topics aligns closely with the overall toxicity trend in the overview graph, with minor deviations in the scale dip observed in late 2021 and 2022 . These minor differences aside, the alignment confirms that our selected categories sufficiently represent the broader toxicity trends, validating their relevance for further analysis.
+
+<div style="text-align: center;">
+    <img src="report-images/toxicity_societal_governance.png" alt="Toxicity Trend Societal & Governance" />
+    <p><em>Figure 10: Toxicity Trend Societal & Governance</em></p>
+</div>
+
+<div style="text-align: center;">
+    <img src="report-images/toxicity_entertainment.png" alt="Toxicity Trend Entertainment" />
+    <p><em>Figure 11: Toxicity Trend Entertainment</em></p>
+</div>
+
+Key Observations:
+
+- Religion consistently shows the highest proportion of toxic comments from 2020 to 2023.
+- Topics such as Singapore Politics, Transport, Sports, and Music display an overall rising trend in proportion of toxic comments over time.
+- A spike in the proportion of toxic comments related to Covid-19 emerged in late 2020, which coincided with tighter government restrictions and debates over mask enforcement, likely reflecting pandemic fatigue and frustration with ongoing restrictions as the situation slowly improved. Its decline in the last quarter of 2022 followed by its disappearance from the Top 15 comments in 2023 also aligns with the easing of Covid-19 policies like mask wearing.
+- The rise in the proportion of toxic comments for gaming throughout 2021 and 2022 may be attributed to the sudden boom of the gaming industry throughout the lockdown period, including major gaming leagues triggering online debates. 
+- The proportion of toxic comments for entertainment topics fluctuated over the years, with a significant peak for sports at the start of 2021.
+
 
 ### 6.2 Discussion
 
-*In this subsection, you should discuss what the results mean for the business user – specifically how the technical metrics translate into business value and costs, and whether this has sufficiently addressed the business problem.*
+Based on our key findings, we focused our deeper analysis on four topics: **Religion**, **SG Politics**, **Transport**, and **Sports**. These topics were selected due to their high levels of toxic commentary and a rising trend, indicating a need for potential policy intervention. This targeted approach enables us to provide actionable insights for the policy team to address these immediate issues.
 
-*You should also discuss or highlight other important issues like interpretability, fairness, and deployability.*
+To support this, we examined toxic comments within each topic to understand the underlying drivers behind the trends, especially the rising one. By analysing the recurring themes in toxic posts, we aim to highlight the root causes of increased hostility and pinpoint areas where policy changes could help mitigate the issues.
+
+**Religion**
+
+Among the religious topics analysed, discussions around religion show notable fluctuations from 2020 to 2023, with a significant peak in the first half of 2023, reaching the highest level of toxicity in October. The data indicates that religious topics exhibit the highest proportion of toxic comments compared to other topics. Notably, much of the discourse centres on Christianity, Islam, and their practices, as well as debates between atheists and non-atheists, Christian perspectives on LGBTQ+ issues, and publicised cases of alleged hypocrisy and misconduct among religious leaders.
+
+The elevated toxicity in early 2023 can be partially attributed to the debates following the **repeal of Section 377A** in January, which sparked discussions on the intersection of religious beliefs and LGBTQ+ rights, particularly around the question of whether LGBTQ+ identities are considered sinful by some religious interpretations. The **Ministry of Home Affairs’ emphasis on religious harmony** in March 2023 also fueled conversations, as authorities highlighted the need for sensitivity to avoid religious tension. These calls for harmony generated diverse reactions, with some users questioning the balance between religious freedoms and inclusivity in Singapore’s pluralistic society.
+
+Additional spikes in mid 2020 is attributed to significant discourse at the intersection of LGBTQ+ issues and religion, notably involving a female figure, Pastor Pauline Ong. She is a pastor at the Free Community Church (FCC), Singapore's only publicly LGBTQ-affirming Christian congregation. Alongside Pastor Miak Siew, the first ordained openly gay minister in the country, Pastor Ong leads FCC in providing a spiritual home for LGBTQ+ individuals. This has spiked controversies regarding Christian beliefs and practices.
+
+**SG Politics**
+
+In politics, data show a general increase in toxicity from 2020 to 2023, with notable peaks in the latter half of 2021 and a significant rise in early 2023, reaching the highest levels in October. Political discussions emerged as the second most toxic topic, just below religion, largely driven by a series of high-profile controversies and scandals.
+
+A peak in toxicity was observed in the second half of 2021, coinciding with the incident involving Workers’ Party MP Raeesah Khan, who admitted to lying in Parliament about accompanying a sexual assault survivor. This incident ignited intense debates around political accountability and integrity, particularly concerning the Workers’ Party’s handling of the matter. As the public became increasingly vocal, discussions turned critical, highlighting perceived gaps in political transparency and ethical standards.
+
+In early 2023, there was another surge in toxic commentary, reaching unprecedented levels in October. This rise corresponded with multiple political scandals involving high-profile extramarital affairs among political figures, including PAP Speaker Tan Chuan-Jin and MP Cheng Li Hui, as well as Workers' Party members Leon Perera and Nicole Seah. Additionally, the Ridout Road property rental controversy, involving PAP ministers K. Shanmugam and Vivian Balakrishnan, fueled public discourse around conflicts of interest and transparency in government. These events intensified scrutiny of Singapore’s political landscape, driving public frustration and scepticism toward both ruling and opposition parties.
+
+Beyond specific scandals, a large portion of toxic comments reflected general disgruntlement toward the PAP, with frequent criticisms alleging gerrymandering practices and ineffective policies. Comments often expressed outright hatred toward the PAP, support for the Workers’ Party, and dissatisfaction with the country’s direction under current governance. These sentiments suggest widespread frustration with the political status quo and a perception that alternative leadership might better address public grievances.
+
+**Transport**
+
+Among the societal and governance topics analysed, transportation demonstrates significant variability and generally maintains a moderate but concerning level of toxic commentary, which has been on the rise over the recent year. The initial peak observed in 2020 corresponds with an increase in road accidents involving various road users—pedestrians, motorcyclists, cyclists, and cars. The discourse was mainly about road safety, reckless driving, and pedestrian responsibility and further intensified by a controversial petition suggesting a six-month car ban, which spurred heated discussions. 
+
+The trend of toxic commentary surrounding transportation continues to fluctuate until the end of 2021, which includes the increased use of e-bikes following the ban on personal mobility devices (PMDs) on footpaths. This shift led to rising frustrations among road users, particularly concerning safety risks posed by e-bikes. A notable peak toward the end of 2021 also reflects public reaction to the government's stricter regulations on cyclists' behaviour. This regulation ignited debate, with many voicing either support or dissatisfaction.
+
+However, the notable drop in toxicity from late 2021 into early 2022 seems counterintuitive, given a slight increase in reported traffic accidents as per the Singapore Police Force's Annual Road Traffic Situation 2022. However, this dip might be explained by a shift in public focus toward other social issues, including religion, politics, and housing, which all experienced rises in toxicity during this period shown on the graph.
+
+Finally, the transportation-related toxicity shows an upward trend from mid-2022, which appears to persist into late 2023. This aligns with recent reports highlighting an increase in both fatal and non-fatal traffic accidents. Upon examination, discussions reveal heightened tension among various road users, particularly with regards to cyclists' actions on public roads. This ongoing trend suggests that road safety remains a contentious issue, fueling an ever-growing proportion of toxic comments which warrant action from the government. 
+
+**Sports**
+
+Among the 4 topics in entertainment, sports has the highest variability and seems to exhibit a periodic upward trend. The proportion of toxic comments peaked in January 2021, where over 30% of the comments were flagged to be toxic by our model. Upon closer examination, there were a significant number of complaints about difficulties in booking badminton courts. In February 2021, SportsSG responded by clamping down on reselling of public sports facility booking, as some organisers were caught reselling court bookings to players for profit. However, the issue remained over the years as people wrote scripts and used bots to secure booking, making the process extremely competitive and hindering the accessibility of these facilities to the public.
+
+The subsequent spike in toxicity occurred in early 2022, when news of national athletes missing out on Asian Games spurred discussion on the effectiveness of Singapore National Olympic Council (SNOC), Football Association of Singapore (FAS), and problems that persisted in the sports ecosystem. Similarly in the latter half of 2023, controversies surrounding national athletes and the local sports scene, especially football were brought up frequently again.
+
+The poor performances of local football leagues have been frequently discussed throughout the years. The core issue lies in the lack of efforts in creating a vibrant sports culture and supporting talented individuals to pursue sports as a career. The government passed an amendment in July 2023 to re-evaluate its sports management and planned to commit to clear and achievable goals for sporting success. However, the public remains sceptical as more concrete policies and reforms are needed.
+
 
 ### 6.3 Recommendations
 
-*In this subsection, you should highlight your recommendations for what to do next. For most projects, what to do next is either to deploy the model into production or to close off this project and move on to something else. Reasoning about this involves understanding the business value, and the potential IT costs of deploying and integrating the model.*
+**Social Media Platforms**
 
-*Other things you can recommend would typically relate to data quality and availability, or other areas of experimentation that you did not have time or resources to do this time round.*
+Given the increasing prevalence of toxic comments, particularly in contentious areas like Religion and rising issues in Singapore Politics, Transport, Sports, and Music, we recommend the policy team advise social media platforms to strengthen their moderation measures. This could include:
+
+- Enhanced Content Moderation: Platforms should apply stricter moderation protocols for the identified topics, using automated and manual review processes to address potentially harmful content promptly.
+
+- Peak Time Moderation: Toxicity peaks between 6pm and 10pm; therefore, platforms could benefit from allocating additional resources during these hours to manage increased comment volumes and toxicity levels effectively.
+
+**Policy Team (Governmental Issues)**
+
+In light of the insights gathered from our focus on the topics of Religion, SG Politics, Transport, and Sports, we recommend the policy team further investigate the root causes of the rising toxicity in these areas. This would allow for a more informed approach to addressing public concerns and mitigating online hostility. However, some immediate targeted actions could include:
+
+**Religion**
+
+We recommend that the government take a proactive approach to promote interfaith understanding and harmony by incorporating religious education into the school curriculum. While Singapore has made significant efforts to foster racial harmony through initiatives like Racial Harmony Day, there has been less emphasis on promoting understanding and tolerance among different religious groups. By introducing age-appropriate lessons on different religions, their practices, and their core values, schools can help students develop a better understanding for the diverse religious landscape in Singapore and help prevent the formation of prejudices and stereotypes, promoting a more inclusive and tolerant society, both online and offline.
+
+In addition to formal education, we recommend implementing policies that encourage constructive dialogue and respectful engagement, such as enhanced monitoring and moderation of online platforms to prevent hate speech and misinformation while protecting freedom of expression. The government can also support community-led interfaith dialogues and events that bring together people from different religious backgrounds to share their experiences and perspectives, helping to break down barriers and foster mutual understanding and respect. Digital literacy campaigns, particularly targeted at younger audiences, can further promote responsible online behaviour and critical thinking when encountering sensitive topics.
+
+**SG Politics**
+
+We recommend policies to strengthen transparency and accountability in politics by implementing clear guidelines for conflict of interest cases, establishing robust mechanisms for ethical compliance, and enhancing public communication around policy reforms. Such measures aim to rebuild trust in Singapore's political institutions and address public concerns related to integrity and governance. Additionally, these actions can help reduce online toxicity in religious discussions, promote a balanced approach to free expression, and foster religious harmony in a diverse society. 
+
+**Transportation**
+
+It is essential for the government to enforce stricter traffic rules and promote careful driving habits to curb the increasing number of traffic accidents. However, given the involvement of diverse stakeholders—drivers, cyclists, pedestrians, and e-bike users—each with distinct needs and challenges, these measures must be implemented thoughtfully. A balanced approach that carefully considers each group’s concerns is crucial to avoid unintended conflicts. Regulations should also be crafted to clearly justify and address specific wrongdoing, ensuring that any penalties are fair and transparent. This will help foster a sense of accountability while maintaining public trust in traffic enforcement policies. Additionally, consistent public education on road safety and shared responsibility can further support these efforts, ultimately contributing to a safer and more harmonious transportation environment.
+
+**Sports**
+
+To strengthen the local sports scene, policies such as higher pay for professional sports players, alignment of goals for public-private partnership projects like SportsHub, and development programs in grooming sports talents including eSports will be helpful. Bot detection algorithms should be added to booking platforms to ensure accessibility to sporting facilities. Moreover, social media platforms can direct online discourse and shape public attitudes towards national athletes by highlighting their achievement and contributions.
+
+
+## 7. Next Step
+
+To build on our findings and enhance the robustness of our analysis, the following steps are proposed for our future work:
+
+- **Fine-tuning for Singlish Context:** Instead of relying solely on a pre-trained model, future work could focus on fine-tuning the model specifically for Singlish language and context to improve the recall of toxicity labelling. With a more nuanced understanding of local language nuances and toxic patterns, this approach could yield more accurate and insightful recommendations based on comprehensive data.
+
+- **Broadening Topic Scope:** Expanding beyond the current 9 topics would enable the identification of additional rising trends, allowing for a more holistic analysis of online discourse.
+
+- **Automated Analysis of Full Dataset:** Currently, our analysis included manual review of specific months where trends appeared noteworthy. With additional time and resources, leveraging LLMs to identify underlying causes across the entire dataset could uncover insights that were previously unaddressed, leading to more targeted and actionable recommendations developed efficiently.
+
+- **Topic modelling**: As a future improvement, we could experiment with tuning additional HDBScan parameters beyond just `min_samples` and `min_cluster_size`, such as `cluster_selection_epsilon` and `alpha`, for finer control over clustering. Additionally, we could implement multi-aspect topic modelling to capture distinct dimensions within topics, as described in BERTopic’s documentation. Unlike traditional topic modelling, which identifies a single theme per topic, multi-aspect modelling decomposes topics into different subtopics or “aspects.” This would allow us to analyse complex themes in greater detail, offering insights into specific facets within a single topic.
+
+<br>
+References:
+
+- References for Vader model: <br>
+https://github.com/cjhutto/vaderSentiment/blob/master/README.rst
