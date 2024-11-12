@@ -283,7 +283,7 @@ We developed a frontend dashboard interface for our toxic comment analysis to en
 
 This dashboard allows end users to easily obtain an understanding of the levels of toxicity and hate in the most popular Reddit topics and take a deep dive into specific time periods and topics, making the tracker a valuable tool for maintaining online community standards. 
 
-To run the frontend dashboard, run `streamlit run app.py` in your terminal. It requires the `updated_full_comments_new_topic.csv` dataset.
+To run the frontend dashboard, run `streamlit run app.py` in your terminal. It requires the `topic_relabelled_full.csv` dataset.
 
 ### Section 6: Findings
 

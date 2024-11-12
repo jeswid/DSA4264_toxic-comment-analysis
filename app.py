@@ -46,7 +46,7 @@ entertainment_options = ["Sports", "Music", "Gaming", "Media"]
 entertainment_chosen = st.sidebar.pills("Entertainment Topics ", entertainment_options, selection_mode="multi")
 
 ################ Backend ################
-df = pd.read_csv("updated_full_comments_new_topic.csv", index_col=0)
+df = pd.read_csv("topic_relabelled_full.csv", index_col=0)
 df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
 df['Month'] = pd.to_datetime(df['timestamp']).dt.to_period('M')
 df['Toxic'] = df['predicted_label'].apply(lambda x: 1 if x == 'toxic' else 0)
@@ -60,15 +60,15 @@ monthly_toxicity_filtered = monthly_toxicity[(monthly_toxicity['Month'] >= pd.to
 
 names_to_number = {"Religion": 1, "SG Politics": 2, "Covid": 3, "Housing": 5, "Transport": 8,
                    "Sports": 4, "Music": 6, "Gaming": 7, "Media": 9}
+number_to_names = {1: "Religion", 2: "SG Politics", 3: "Covid", 5: "Housing", 8: "Transport",
+                   4: "Sports", 6: "Music", 7: "Gaming", 9: "Media"}
 
 policy_govt = monthly_toxicity_filtered[(monthly_toxicity_filtered['new_topic'].isin([1, 2, 3, 5, 8]))]
 policy_govt['Toxic_MA'] = policy_govt.groupby('new_topic')['Toxic'].transform(lambda x: x.rolling(window=3, min_periods=1).mean())
-policy_names_to_number = {"Religion": 1, "SG Politics": 2, "Covid": 3, "Housing": 5, "Transport": 8}
 policy_topic_colors = {1: "#8E44AD", 2: "#E74C3C", 3: "#3498DB", 5: "#F39C12", 8: "#27AE60"}
 
 entertainment = monthly_toxicity_filtered[(monthly_toxicity_filtered['new_topic'].isin([4, 6, 7, 9]))]
 entertainment['Toxic_MA'] = entertainment.groupby('new_topic')['Toxic'].transform(lambda x: x.rolling(window=3, min_periods=1).mean())
-entertainment_names_to_number = {"Sports": 4, "Music": 6, "Gaming": 7, "Media": 9}
 entertainment_topic_colors = {4: "#27AE60", 6: "#E74C3C", 7: "#3498DB", 9: "#F39C12"}
 
 ################ Frontend ################
@@ -83,7 +83,7 @@ with st.container(border=True):
 
         # Add each topic line as a separate trace for full customization
         for topic in policy_chosen:
-            topic_number = policy_names_to_number.get(topic)
+            topic_number = names_to_number.get(topic)
             topic_data = policy_govt[policy_govt['new_topic'] == topic_number]
             label = topic
             color = policy_topic_colors.get(topic_number) 
@@ -128,7 +128,7 @@ with st.container(border=True):
 
         # Add each topic line as a separate trace for full customization
         for topic in entertainment_chosen:
-            topic_number = entertainment_names_to_number.get(topic)
+            topic_number = names_to_number.get(topic)
             topic_data = entertainment[entertainment['new_topic'] == topic_number]
             label = topic
             color = entertainment_topic_colors.get(topic_number) 
@@ -172,7 +172,6 @@ with st.container(border=True):
     st.subheader("Toxic Comments")
     st.write("Retrieve toxic comments for selected topic in a particular month")
 
-    #all_options = ["Religion", "SG Politics", "Covid", "Housing", "Transport", "Sports", "Music", "Gaming", "Media"] 
     all_options = policy_chosen + entertainment_chosen
     topics_chosen = st.pills("Selected Topics", all_options, selection_mode= "multi")
     numeric_topics_chosen = [names_to_number[topic] for topic in topics_chosen]
@@ -200,7 +199,12 @@ with st.container(border=True):
                  (table_data['new_topic'].isin(numeric_topics_chosen)) &
                  (table_data['Toxic'] == 1)].reset_index()
     
-    st.dataframe(filtered_df[['timestamp', 'original text', 'new_topic']], use_container_width=True)
+    filtered_df["topic_name"] = filtered_df['new_topic'].apply(lambda x: number_to_names.get(x))
+     
+    # Sort the DataFrame by 'timestamp' in ascending order
+    filtered_df = filtered_df.sort_values(by='timestamp', ascending=True).reset_index(drop=True)
+
+    st.dataframe(filtered_df[['timestamp', 'original text', "topic_name"]], use_container_width=True)
 
 
     
