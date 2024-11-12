@@ -189,6 +189,8 @@ The code below shows our tuning function, with the HDBSCAN model initiated keepi
 ```python
 # Tuning HDBSCAN parameters using the true DBCV score from validity_index
 def randomized_hdbscan_search(embeddings, min_samples_values, min_cluster_sizes, n_iter=10):
+    random.seed(42)
+    
     best_dbvc_score = -np.inf
     best_params = None
     best_model = None
@@ -202,11 +204,13 @@ def randomized_hdbscan_search(embeddings, min_samples_values, min_cluster_sizes,
 
     for min_cluster_size, min_samples in sampled_combinations:
         # Initialize and fit HDBSCAN with sampled parameters
+        # Explicitly set gen_min_span_tree to True
         clusterer = HDBSCAN(
             min_cluster_size=min_cluster_size,
             min_samples=min_samples,
             metric='euclidean',
-            cluster_selection_method='eom'
+            cluster_selection_method='eom',
+            gen_min_span_tree=True # This line is added to force the MST generation
         )
         clusterer.fit(embeddings)
 
