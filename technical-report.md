@@ -266,7 +266,7 @@ best_model = search_results.best_estimator_
 best_params = search_results.best_params_
 best_score = search_results.best_score_
 ```
-We found that the optimal values were a minimum cluster size of 350 and a minimum samples value of 20, resulting in the highest relative validity index score of 0.31. Although this score is not close to 1 (the ideal relative validity index score), our primary objective was to identify a few dominant topics. This means our clusters encompass a large volume of comments, forming broader clusters rather than fine-grained, smaller ones. As a result, our approach may not yield the highest possible relative validity index score.
+We found that the optimal values were a minimum cluster size of 350 and a minimum samples value of 5, resulting in the highest relative validity index score of 0.183. Although this score is not close to 1 (the ideal relative validity index score), our primary objective was to identify a few dominant topics. This means our clusters encompass a large volume of comments, forming broader clusters rather than fine-grained, smaller ones. As a result, our approach may not yield the highest possible relative validity index score.
 
 **Training and Embedding Strategy**
 
