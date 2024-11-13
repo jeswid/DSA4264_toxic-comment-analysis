@@ -280,7 +280,7 @@ best_model = search_results.best_estimator_
 best_params = search_results.best_params_
 best_score = search_results.best_score_
 ```
-We found that the optimal values were a minimum cluster size of 300 or 350 and a minimum samples value of 5, resulting in the highest relative validity index score of 0.183. Although this score is not close to 1 (the ideal relative validity index score), our primary objective was to identify a few dominant topics. This means our clusters encompass a large volume of comments, forming broader clusters rather than fine-grained, smaller ones. As a result, our approach may not yield the highest possible relative validity index score. We attained minimum cluster size of 300 on our first pass and fitted our bertopic model using this parameter, but obtained 350 topics on our second pass due to the stochastic nature of UMAP and embedding generation, despite already controlling for random_state = 42 where possible. 
+We found that the optimal values were a minimum cluster size of 300 or 350 and a minimum samples value of 5, resulting in the highest relative validity index score of 0.183. Although this score is not close to 1 (the ideal relative validity index score), our primary objective was to identify a few dominant topics. This means our clusters encompass a large volume of comments, forming broader clusters rather than fine-grained, smaller ones. As a result, our approach may not yield the highest possible relative validity index score. We attained minimum cluster size of 300 on our first pass and fitted our bertopic model using this parameter, but obtained 350 topics on our second pass. Despite setting a random seed of 42, UMAP and HDBSCAN may yield slightly different results due to inherent stochasticity in hierarchical density estimation and parallel processing (McInnes et al., 2017; Campbello et al., 2013).
 
 **Training and Embedding Strategy**
 
@@ -821,3 +821,5 @@ Montani, Ines, et al. “Explosion/SpaCy: V3.7.2: Fixes for APIs and Requirement
 Reimers, Nils, and Iryna Gurevych. Making Monolingual Sentence Embeddings Multilingual Using Knowledge Distillation. 21 Apr. 2020, https://doi.org/10.48550/arxiv.2004.09813.<br>
 
 Röder, Michael, et al. “Exploring the Space of Topic Coherence Measures.” Proceedings of the Eighth ACM International Conference on Web Search and Data Mining - WSDM ’15, 2015, pp. 399–408, svn.aksw.org/papers/2015/WSDM_Topic_Evaluation/public.pdf, https://doi.org/10.1145/2684822.2685324.
+
+
