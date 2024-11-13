@@ -2,7 +2,7 @@
 
 **Project: Problem 2 - Online Safety in Social Media**  
 **Members: Eu Shae-Anne, Tiffany Irene Prasetio, Wang Tingyu Kelly, Duangporn Sirikulwattananon, Jessica Widyawati**  
-Last updated on {last updated date}
+Last updated on 13 Nov 2024
 
 ## Section 1: Context
 
