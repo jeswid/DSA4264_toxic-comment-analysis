@@ -173,8 +173,8 @@ Recognizing the limitations of LDA and SpaCy, we decided to transition to **Vade
 
 For this project, we aimed to find general, rather than specific topics in our data. For example, rather than finding topics such as “Football” or “Olympics”, we aimed to identify the broader topic of “Sports”. This is because broader topics are able to capture a larger proportion of Reddit comments. For clustering in BERTopic, we used HDBScan, which we tuned for the following parameters:
 
-- **Min Cluster Size**: We experimented with values from 250 to 450, choosing 350 as the optimal size for capturing broad topic themes while maintaining cluster cohesion.
-- **Min Samples**: We experimented with values from 5 to 20, choosing 20 as the optimal size to balance the need for reliable clusters without excluding too many comments.
+- **Min Cluster Size**: We experimented with values from 250 to 450, choosing 300 or 350 as the optimal size for capturing broad topic themes while maintaining cluster cohesion.
+- **Min Samples**: We experimented with values from 5 to 20, choosing 5 as the optimal size to balance the need for reliable clusters without excluding too many comments.
 
 The code below shows our setting up of the range of min cluster size and min sample values
 
@@ -266,7 +266,7 @@ best_model = search_results.best_estimator_
 best_params = search_results.best_params_
 best_score = search_results.best_score_
 ```
-We found that the optimal values were a minimum cluster size of 350 and a minimum samples value of 5, resulting in the highest relative validity index score of 0.183. Although this score is not close to 1 (the ideal relative validity index score), our primary objective was to identify a few dominant topics. This means our clusters encompass a large volume of comments, forming broader clusters rather than fine-grained, smaller ones. As a result, our approach may not yield the highest possible relative validity index score.
+We found that the optimal values were a minimum cluster size of 300 or 350 and a minimum samples value of 5, resulting in the highest relative validity index score of 0.183. Although this score is not close to 1 (the ideal relative validity index score), our primary objective was to identify a few dominant topics. This means our clusters encompass a large volume of comments, forming broader clusters rather than fine-grained, smaller ones. As a result, our approach may not yield the highest possible relative validity index score. We attained minimum cluster size of 300 on our first pass and fitted our bertopic model using this parameter, but obtained 350 topics on our second pass due to the stochastic nature of UMAP and embedding generation, despite already setting seed = 42. 
 
 **Training and Embedding Strategy**
 
@@ -294,7 +294,7 @@ We ran our optimal BERTopic model on the rest of the dataset. Given limited GPU 
 ```python
 #Best parameters
 best_hdbscan = HDBSCAN(cluster_selection_method='eom', metric='euclidean',
-        min_cluster_size=350, min_samples=20)
+        min_cluster_size=300, min_samples=5)
 
 #Best bertopic model
 topic_model = BERTopic(hdbscan_model=best_hdbscan)
