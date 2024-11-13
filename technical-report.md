@@ -201,7 +201,21 @@ def score(self, X, y=None):
 ```
 The validity index was preferred over traditional metrics like the silhouette score and coherence score, which are generally more suited for centroid-based clustering models such as k-means (Maas et al., 2021). These traditional metrics are less effective for density-based clustering algorithms, which can have clusters of varying shapes and densities. The validity index better aligns with the nature of HDBSCAN and offers a more reliable measure of clustering quality for such models. The chosen values for min_cluster_size and min_samples are the values that correspond to the highest validity index score (dbcv_score) relative to other combinations of parameter values.
 
-The code below shows our tuning function, where we initiated the HDBSCAN model with metric='euclidean' and cluster_selection_method='eom', while tuning only min_cluster_size and min_samples. To save computational resources, we performed tuning on a 2.5% stratified sample of the dataset, based on comment year and subreddit source. Due to limited GPU and RAM, we focused on key parameters rather than exploring additional distance metrics and clustering methods, which would demand significantly more resources with high-dimensional Reddit data. Prior to tuning, we applied UMAP to reduce embedding dimensionality, ensuring that the optimal parameter values are based on meaningful text data features rather than noise. Additionally, we used `RandomizedSearchCV()` to sample parameter combinations efficiently, optimizing computational efficiency and managing memory and time constraints during fine-tuning.
+The code below shows our tuning function, where we initiated the HDBSCAN model with metric='euclidean' and cluster_selection_method='eom', while tuning only min_cluster_size and min_samples. To save computational resources, we performed tuning on a 2.5% stratified sample of the dataset, based on comment year and subreddit source. Due to limited GPU and RAM, we focused on key parameters rather than exploring additional distance metrics and clustering methods, which would demand significantly more resources with high-dimensional Reddit data. Prior to tuning, we generated embeddings to be fitted to the HDBSCAN model and applied UMAP to reduce embedding dimensionality, ensuring that the optimal parameter values are based on meaningful text data features rather than noise. Additionally, we used `RandomizedSearchCV()` to sample parameter combinations efficiently, optimizing computational efficiency and managing memory and time constraints during fine-tuning.
+
+```python
+# Set seeds for reproducibility
+torch.manual_seed(42)
+np.random.seed(42)
+random.seed(42)
+
+# Set deterministic algorithms in PyTorch (useful for ensuring reproducibility)
+torch.use_deterministic_algorithms(True)
+
+#step 1 - generate embeddings
+model = SentenceTransformer("all-MiniLM-L6-v2")  # Use an SBERT model for embedding
+embeddings = model.encode(sample_data['text'].tolist(), show_progress_bar=True)
+```
 
 ```python
 # Step 2: Reduce Dimensionality with UMAP
@@ -211,7 +225,7 @@ umap_embeddings = fitted_umap.embedding_
 To tune HDBSCAN with `RandomizedSearchCV()`, we first need to create a custom wrapper class, `HDBSCANWrapper`, which includes the essential characteristics required for HDBSCAN to function as a model within `RandomizedSearchCV()`. This wrapper lets us define parameters and methods, ensuring compatibility with the requirements of `RandomizedSearchCV()`. We opted for this approach after testing both manual grid search and a custom randomized search function, which exceeded our computational resources during execution.
 
 ```python
-# Step 1: Define a custom HDBSCAN estimator wrapper
+# Step 3: Define a custom HDBSCAN estimator wrapper
 class HDBSCANWrapper(BaseEstimator, ClusterMixin):
     def __init__(self, min_cluster_size=5, min_samples=5, metric='euclidean'):
         self.min_cluster_size = min_cluster_size
@@ -241,13 +255,13 @@ class HDBSCANWrapper(BaseEstimator, ClusterMixin):
 After creating the `HDBSCANWrapper`, we define the parameter distributions for `RandomizedSearchCV()` and set up `RandomizedSearchCV()` with the `HDBSCANWrapper` as follows
 
 ```python
-# Step 2: Define parameter distributions for RandomizedSearchCV
+# Step 4: Define parameter distributions for RandomizedSearchCV
 param_dist = {
     'min_cluster_size': min_cluster_sizes,
     'min_samples': min_samples_values,
 }
 
-# Step 3: Set up RandomizedSearchCV with the custom HDBSCANWrapper
+# Step 5: Set up RandomizedSearchCV with the custom HDBSCANWrapper
 random_search = RandomizedSearchCV(
     estimator=HDBSCANWrapper(),
     param_distributions=param_dist,
@@ -259,14 +273,14 @@ random_search = RandomizedSearchCV(
 Finally, we perform the tuning on `umap_embeddings` and obtain the optimal min_cluster_size and min_samples values
 
 ```python
-# Step 4: Perform the search on embeddings
+# Step 6: Perform the search on embeddings
 search_results = random_search.fit(umap_embeddings)
-# Step 5: Extract the best parameters and score
+# Step 7: Extract the best parameters and score
 best_model = search_results.best_estimator_
 best_params = search_results.best_params_
 best_score = search_results.best_score_
 ```
-We found that the optimal values were a minimum cluster size of 300 or 350 and a minimum samples value of 5, resulting in the highest relative validity index score of 0.183. Although this score is not close to 1 (the ideal relative validity index score), our primary objective was to identify a few dominant topics. This means our clusters encompass a large volume of comments, forming broader clusters rather than fine-grained, smaller ones. As a result, our approach may not yield the highest possible relative validity index score. We attained minimum cluster size of 300 on our first pass and fitted our bertopic model using this parameter, but obtained 350 topics on our second pass due to the stochastic nature of UMAP and embedding generation, despite already setting seed = 42. 
+We found that the optimal values were a minimum cluster size of 300 or 350 and a minimum samples value of 5, resulting in the highest relative validity index score of 0.183. Although this score is not close to 1 (the ideal relative validity index score), our primary objective was to identify a few dominant topics. This means our clusters encompass a large volume of comments, forming broader clusters rather than fine-grained, smaller ones. As a result, our approach may not yield the highest possible relative validity index score. We attained minimum cluster size of 300 on our first pass and fitted our bertopic model using this parameter, but obtained 350 topics on our second pass due to the stochastic nature of UMAP and embedding generation, despite already setting random_state = 42. 
 
 **Training and Embedding Strategy**
 
