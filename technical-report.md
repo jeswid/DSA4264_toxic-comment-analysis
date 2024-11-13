@@ -559,10 +559,12 @@ Vader, despite having the lowest recall score, was also deemed unsuitable for to
 
 In contrast, `unitary/toxic-bert` with a threshold of 0.1 emerged as the second-best performing model, with a recall score in the range of 0.65 to 0.75. While it did not outperform Perspective in recall, it offered a significantly faster processing time, making it more suitable for our project timeline. This recall range is adequate given our use case, as it reduces over-flagging of non-toxic content without requiring an extremely high threshold, which would be essential for more high-stakes applications like banking fraud detection. Although this threshold may introduce some false positives, its effectiveness in consistently detecting toxic content outweighs these drawbacks. Given its balance of performance and efficiency, we selected unitary/toxic-bert at a threshold of 0.1 as our final toxicity labelling model.
 
-|          | Perspective (0.2) | Vader (-0.4)     | unitary/toxic-bert<br>(0.1)  | pykeio/lite-toxic-comment-<br>classification (0.1)
-| -------- | ----------------- | ---------------- | ---------------------------- | ------------------- |
-| Recall   | 0.73              | 0.48             | 0.65                         | 0.63                |
-
+| Perspective (0.2) | Vader (-0.4)     | unitary/toxic-bert<br>(0.1)  | pykeio/lite-toxic-comment-<br>classification (0.1)
+| ----------------- | ---------------- | ---------------------------- | ------------------- |
+| 0.73              | 0.48             | 0.65                         | 0.63                |
+<div style="text-align: center;">
+    <p><em>Table 1: Comparing Recall Across Models</em></p>
+</div>
 
 ### 4.5 Labelling Toxicity
 
