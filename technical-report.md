@@ -187,7 +187,7 @@ min_samples_values = [5, 10, 15, 20]
 
 **Evaluation Metric: HDBSCAN Relative Validity Index**
 
-We used the HDBSCAN Relative Validity Index to evaluate cluster quality in BERTopic. The relative validity index, as implemented in HDBSCAN, measures the clustering's consistency by considering both intra-cluster density and inter-cluster separation in a comparative manner. This provides a quantitative metric that helps assess the relative validity of different clustering solutions without requiring prior knowledge of the number of clusters (Campello et al., 2013). This metric is particularly suitable for density-based clustering methods like HDBSCAN, as it can account for density variations while balancing computational efficiency.
+The HDBSCAN Relative Validity Index was used to evaluate cluster quality in BERTopic. This index measures clustering consistency by comparing both intra-cluster density and inter-cluster separation. Unlike absolute metrics, it provides a comparative assessment, making it useful for evaluating the relative quality of clustering solutions generated with different parameter settings, without needing a predefined number of clusters (Campello et al., 2013). It is particularly suited for density-based clustering methods, as it accounts for variations in density while maintaining computational efficiency. Therefore, the HDBSCAN Relative Validity Index allows for comparison between clustering solutions rather than an objective assessment of any single clustering solution’s quality (“API Reference — Hdbscan 0.8.1 Documentation”).
 
 Below is the specific code portion containing the relative validity index in our score() function used in fine-tuning:
 
@@ -280,7 +280,7 @@ best_model = search_results.best_estimator_
 best_params = search_results.best_params_
 best_score = search_results.best_score_
 ```
-We found that the optimal values were a minimum cluster size of 300 or 350 and a minimum samples value of 5, resulting in the highest relative validity index score of 0.183. Although this score is not close to 1 (the ideal relative validity index score), our primary objective was to identify a few dominant topics. This means our clusters encompass a large volume of comments, forming broader clusters rather than fine-grained, smaller ones. As a result, our approach may not yield the highest possible relative validity index score. We attained minimum cluster size of 300 on our first pass and fitted our bertopic model using this parameter, but obtained 350 topics on our second pass. Despite setting a random seed of 42, UMAP and HDBSCAN may yield slightly different results due to inherent stochasticity in hierarchical density estimation and parallel processing (McInnes et al., 2017; Campbello et al., 2013).
+We found that the optimal values were a minimum cluster size of 300 or 350 and a minimum samples value of 5, resulting in the highest relative validity index score of 0.183. We attained minimum cluster size of 300 on our first pass and fitted our bertopic model using this parameter, but obtained 350 topics on our second pass. Despite setting a random seed of 42, UMAP and HDBSCAN may yield slightly different results due to inherent stochasticity in hierarchical density estimation and parallel processing (McInnes et al., 2017; Campbello et al., 2013).
 
 **Training and Embedding Strategy**
 
@@ -801,6 +801,8 @@ To build on our findings and enhance the robustness of our analysis, the followi
 
 <br>
 References:<br>
+
+“API Reference — Hdbscan 0.8.1 Documentation.” Hdbscan.readthedocs.io, hdbscan.readthedocs.io/en/latest/api.html.<br>
 
 Bird, Steven, and Ewan Klein. Natural Language Processing with Python. 2009.<br>
 
